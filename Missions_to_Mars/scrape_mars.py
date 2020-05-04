@@ -54,11 +54,11 @@ def scrape():
     twitter_logout_url = 'https://twitter.com/logout'
     mars_weather_url = 'https://twitter.com/marswxreport?lang=en'
     browser.visit(twitter_logout_url)
-    time.sleep(2)
+    time.sleep(1)
     browser.visit(mars_weather_url)
     # Wait for the page to load!
     # It didn't work without the delay
-    time.sleep(5)
+    time.sleep(3)
 
     no_weather_msg = "Failed to extract weather information"
     mars_weather = no_weather_msg
@@ -86,7 +86,7 @@ def scrape():
     if mars_weather == no_weather_msg:
         # Try again
         browser.reload()
-        time.sleep(5)
+        time.sleep(3)
 
         # Very stupid and straightforward (and probably the most effective) approach:
         # Just find the first string that looks like Mars weather

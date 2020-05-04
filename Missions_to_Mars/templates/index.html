@@ -107,5 +107,12 @@
         <!-- Optional JavaScript -->
         <script src="{{ url_for('static', filename='js/jquery-3.4.1.slim.min.js') }}"></script> <!-- v3.5.0 is incompatible! -->
         <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+        <script>
+            $('#scrape-btn').click(function() {
+                $('#scrape-btn').html(
+                    '<span class="spinner-border align-middle mr-3" role="status" style="width: 1.5rem; height: 1.5rem;" aria-hidden="true"></span>Scraping...'
+                ).addClass('disabled');
+            });
+        </script>
     </body>
 </html>
