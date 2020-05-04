@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+        <!-- Favicon -->
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+        <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+
+        <title>Mission to Mars</title>
+    </head>
+
+    <body class="bg-light">
+
+        <!-- ************* Header ************* -->
+    
+        <div class="jumbotron jumbotron-fluid text-center">
+            <div class="container">
+                <h1 class="display-4">Mission to Mars</h1>
+                <a id="scrape-btn" class="btn btn-primary btn-lg" href="/scrape" role="button">Scrape New Data</a>
+          </div>
+        </div>
+
+        <!-- ************* Main content ************* -->
+
+        <div class="container">
+            <!-- News -->
+            <div class="row m-2">
+                <div class="col">
+                    <h2>Latest Mars News</h2>
+                    <h4>{{ mars_info.news_title }}</h4>
+                    <span>{{ mars_info.news_para }}</span>
+                </div>
+            </div>
+
+            <!-- Image/Weather/Table -->
+            <div class="row mx-2 my-4">
+                <!-- Image -->
+                <div class="col-12 col-xl-8">
+                    <h2>Featured Image</h2>
+                    <div class="card">
+                        <img class='card-img-top' src="{{ mars_info.featured_image_url }}" alt="{{ mars_info.featured_image_alt }}">
+                        <div class="card-img-overlay d-flex flex-column justify-content-end text-light text-center">
+                            <h5 class="card-title">{{ mars_info.featured_image_alt }}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-xl-4">
+                    <div class="row mt-2">
+                        <!-- Weather -->
+                        <div class="col-12 col-md-6 col-xl-12 my-2">
+                            <div class="card">
+                                <div class="card-body">
+                                <h5 class="card-title">Current Weather on Mars</h5>
+                                <p class="card-text">{{ mars_info.mars_weather }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Table -->
+                        <div class="col-12 col-md-6 col-xl-12 mt-2">
+                            <h5>Mars Facts</h5>
+                            {{ mars_info.mars_facts_table|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hemispheres -->
+            <div class="row m-4">
+                <div class="col-12 text-center">
+                    <h2>Mars Hemispheres</h2>
+                    <hr>
+                </div>
+                {% for hemi in mars_info.hemisphere_image_urls %}
+                <div class="col-12 col-md-6 mb-4">
+                  <div class="card">
+                    <img src="{{ hemi.img_url }}" class="card-img-top" alt="{{ hemi.title }}">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ hemi.title }}</h5>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ***** Footer ***** -->
+
+        <footer class="jumbotron page-footer fixed-bottom px-3 py-1 mb-0">
+        <div class="row">
+            <div class="col-auto mr-auto">
+                <small>UT-TOR-DATA-PT-01-2020-U-C Week 12 Homework</small>
+            </div>
+            <div class="col-auto">
+                <small>© Boris Smirnov</small>
+            </div>
+        </div>
+        </footer>
+
+        <!-- Optional JavaScript -->
+        <script src="{{ url_for('static', filename='js/jquery-3.4.1.slim.min.js') }}"></script> <!-- v3.5.0 is incompatible! -->
+        <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    </body>
+</html>
