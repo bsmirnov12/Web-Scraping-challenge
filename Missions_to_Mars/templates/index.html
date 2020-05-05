@@ -27,6 +27,7 @@
                 <a id="scrape-btn" class="btn btn-primary btn-lg" href="/scrape" role="button">Scrape New Data</a>
           </div>
         </div>
+        <div id="progress-info" class="row small text-secondary px-3">&nbsp;</div>
         <div class="progress m-0" style="height: 5px">
             <div class="progress-bar" role="progressbar" style="height: 5px; width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
@@ -125,6 +126,7 @@
                     function() {
                         $.get('/progress')
                             .done( function(response) {
+                                $("#progress-info").html(`Stage ${response.stage} of ${response.stages}: ${response.name}`);
                                 $(".progress-bar").css("width", `${response.progress}%`).attr("aria-valuenow", response.progress);
                             })
                             .fail( function() {
@@ -134,8 +136,14 @@
                 )
             });
 
-            // Reset progress bar to zero on page load
+            // Initializations on page load
             $( function() {
+                // Set progress infiline background to match jumbotron's
+                jumbo_bg = $(".jumbotron").css("background");
+                $("#progress-info").css("background", jumbo_bg);
+                $("#progress-info").html("&nbsp;");
+
+                // Reset progress bar to zero and unregister progress puller
                 clearInterval(intervalTimer);
                 progress = 0;
                 $(".progress-bar").css("width", "0%").attr("aria-valuenow", 0);

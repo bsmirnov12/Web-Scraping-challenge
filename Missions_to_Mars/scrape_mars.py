@@ -9,6 +9,7 @@ import requests
 import re
 import time
 
+
 # Global parameters with splinter Browser configuration parameters
 # Put them here so the calling app can modify them
 browser_args = {
@@ -16,8 +17,9 @@ browser_args = {
     "headless": True
 }
 
+
 # The class is used to report scraping progress to a progress bar on clinet's side
-class Progress:
+class Progress():
     # Parameter: a list of all events that signufy advancement of a progress bar
     def __init__(self, events_lst = [""]):
         self.events_lst = events_lst
@@ -45,7 +47,7 @@ class Progress:
         self.progress = self.stage * self.step
         if self.progress > 100:
             self.progress = 100
-
+        
     # Advances a progress bar by a small step inside of the current stage of progress
     # For example: a stage might have 10 sub stages, to advance to the 3rd step, call progress.substage_start(3, 10)
     # Steps are not accumulated
@@ -57,12 +59,11 @@ class Progress:
     def to_dict(self):
         return {
             'progress': int(self.progress),
-            'stage': self.stage,
+            'stage': self.stage + 1,
             'stages': self.stages,
             'name': self.events_lst[self.stage]
         }
-
-current_progress = Progress()
+    
 
 def make_scraping_progress():
     return Progress([
@@ -72,8 +73,9 @@ def make_scraping_progress():
         "Mars Weather",
         "Mars Facts",
         "Mars Hemispheres",
-        "Finalization"
+        "Finalizing"
     ])
+
 
 # Function does actual scraping and returns a dictionary with scraped data
 # Parameter: Progress object
@@ -82,7 +84,6 @@ def scrape(progress: Progress):
     # One browser to rule them all
     progress.stage_start()
     browser = Browser('chrome', **browser_args)
-
 
     # NASA Mars News
     # ===============
@@ -95,7 +96,6 @@ def scrape(progress: Progress):
 
     news_title = first_news_node.find_by_css('div.content_title').text
     news_para = first_news_node.find_by_css('div.article_teaser_body').text
-
 
     # JPL Mars Space Images - Featured Image
     # =======================================
@@ -178,7 +178,6 @@ def scrape(progress: Progress):
             s = match.group(1)
             mars_weather = 'InSight ' + s.replace('\n', ' ') + ' hPa'
 
-
     # Mars Facts
     # ===========
 
@@ -198,7 +197,6 @@ def scrape(progress: Progress):
     }
 
     mars_facts_table = mars_facts_df.to_html(**args_dct)
-
 
     # Mars Hemispheres
     # =================
@@ -244,7 +242,6 @@ def scrape(progress: Progress):
 
         del hemisphere_dct['download_page_url']
         hemisphere_dct['img_url'] = first_anchor['href']
-
 
     # Finalize
     # =========
