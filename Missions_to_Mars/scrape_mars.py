@@ -16,16 +16,78 @@ browser_args = {
     "headless": True
 }
 
+# The class is used to report scraping progress to a progress bar on clinet's side
+class Progress:
+    # Parameter: a list of all events that signufy advancement of a progress bar
+    def __init__(self, events_lst = [""]):
+        self.events_lst = events_lst
+        self.progress = 0.0
+        self.stage = 0
+        self.stages = len(events_lst)
+        if self.stages:
+            self.step = 100.0 / self.stages
+        else:
+            self.events_lst = [""]
+            self.progress = 100
+
+    # Advances a progress bar either by one event, or up to the named event
+    def stage_start(self, event_name=""):
+        self.stage += 1
+        if self.stage > self.stages:
+            self.stage = self.stages
+
+        if not event_name:
+            try:
+                self.stage = self.events_lst.index(event_name) + 1
+            except:
+                pass
+
+        self.progress = self.stage * self.step
+        if self.progress > 100:
+            self.progress = 100
+
+    # Advances a progress bar by a small step inside of the current stage of progress
+    # For example: a stage might have 10 sub stages, to advance to the 3rd step, call progress.substage_start(3, 10)
+    # Steps are not accumulated
+    def substage_start(self, num, total):
+        self.progress = (self.stage + (num-1)/total) * self.step
+
+    # Return a dictionary with the current progress
+    # Intended to be returnes as JSON object to a request
+    def to_dict(self):
+        return {
+            'progress': int(self.progress),
+            'stage': self.stage,
+            'stages': self.stages,
+            'name': self.events_lst[self.stage]
+        }
+
+current_progress = Progress()
+
+def make_scraping_progress():
+    return Progress([
+        "Staring browser",
+        "NASA Mars News",
+        "JPL Mars Space Images",
+        "Mars Weather",
+        "Mars Facts",
+        "Mars Hemispheres",
+        "Finalization"
+    ])
+
 # Function does actual scraping and returns a dictionary with scraped data
-def scrape():
+# Parameter: Progress object
+def scrape(progress: Progress):
 
     # One browser to rule them all
+    progress.stage_start()
     browser = Browser('chrome', **browser_args)
 
 
     # NASA Mars News
     # ===============
 
+    progress.stage_start()
     nasa_mars_news_url = 'https://mars.nasa.gov/news/'
     browser.visit(nasa_mars_news_url)
 
@@ -39,6 +101,7 @@ def scrape():
     # =======================================
     # N.B. Featured image changes periodically and it isn't necesserily a Mars image, it may be pretty much anything - Saturn, for example.
 
+    progress.stage_start()
     base_jpl_url = 'https://www.jpl.nasa.gov'
     jpl_mars_images_url = 'https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars'
     browser.visit(jpl_mars_images_url)
@@ -51,14 +114,34 @@ def scrape():
     # Mars Weather
     # =============
 
+    progress.stage_start()
+    logout_timeout = 1
+    tweets_timeout = 3
+    steps_count = 1 + logout_timeout + 1 + tweets_timeout
+    current_step = 1
+
     twitter_logout_url = 'https://twitter.com/logout'
     mars_weather_url = 'https://twitter.com/marswxreport?lang=en'
+    
+    progress.substage_start(current_step, steps_count)
     browser.visit(twitter_logout_url)
-    time.sleep(1)
+    steps_count += 1
+
+    for i in range(0, logout_timeout):
+        progress.substage_start(current_step, steps_count)
+        time.sleep(1)
+        current_step += 1
+
+    progress.substage_start(current_step, steps_count)
     browser.visit(mars_weather_url)
+    steps_count += 1
+
     # Wait for the page to load!
     # It didn't work without the delay
-    time.sleep(3)
+    for i in range(tweets_timeout):
+        progress.substage_start(current_step, steps_count)
+        time.sleep(1)
+        current_step += 1
 
     no_weather_msg = "Failed to extract weather information"
     mars_weather = no_weather_msg
@@ -99,6 +182,7 @@ def scrape():
     # Mars Facts
     # ===========
 
+    progress.stage_start()
     mars_facts_url = 'https://space-facts.com/mars/'
     df_list = pd.read_html(mars_facts_url)
     mars_facts_df = df_list[0]
@@ -119,9 +203,16 @@ def scrape():
     # Mars Hemispheres
     # =================
 
+    progress.stage_start()
+    steps_count = 5 # main page and 4 download pages
+    current_step = 1
+    
     mars_hemispheres_url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
     astrogeology_base_url = 'https://astrogeology.usgs.gov'
+
+    progress.substage_start(current_step, steps_count)
     response = requests.get(mars_hemispheres_url)
+    current_step += 1
     soup = BeautifulSoup(response.text, 'lxml')
 
     # First, iterate throught the list of hemispheres, read their names and urls to download pages
@@ -141,6 +232,9 @@ def scrape():
 
     # Secondly, load every image download page and retrieve image url
     for hemisphere_dct in hemisphere_image_urls:
+        progress.substage_start(current_step, steps_count)
+        current_step += 1
+
         time.sleep(1)
         response = requests.get(hemisphere_dct['download_page_url'])
         soup = BeautifulSoup(response.text, 'lxml')
@@ -155,6 +249,7 @@ def scrape():
     # Finalize
     # =========
 
+    progress.stage_start()
     browser.quit()
 
     return {

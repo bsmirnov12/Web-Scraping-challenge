@@ -2,7 +2,7 @@
 # Web Scraping Challenge
 # (C) Boris Smirnov
 
-from flask import Flask, render_template, redirect, send_from_directory
+from flask import Flask, render_template, redirect, jsonify, send_from_directory
 from flask_pymongo import PyMongo
 import scrape_mars
 import time
@@ -30,15 +30,21 @@ def index():
 
 @app.route("/scrape")
 def scraper():
-    trivia_collection = mongo.db.trivia
-    mars_info = scrape_mars.scrape()
-    # mars_info = scrape_mars.test()
-    # time.sleep(3)
+    scrape_mars.current_progress = scrape_mars.make_scraping_progress()
 
+    trivia_collection = mongo.db.trivia
+    mars_info = scrape_mars.scrape(scrape_mars.current_progress)
+    #mars_info = scrape_mars.test()
+    
     trivia_collection.update({}, mars_info, upsert=True)
     print("scraper(): Database updated")
 
+    scrape_mars.current_progress = scrape_mars.Progress()
     return redirect("/", code=302)
+
+@app.route("/progress")
+def progress():
+    return jsonify(scrape_mars.current_progress.to_dict())
 
 if __name__ == "__main__":
     app.run(debug=True)
