@@ -10,14 +10,6 @@ import re
 import time
 
 
-# Global parameters with splinter Browser configuration parameters
-# Put them here so the calling app can modify them
-browser_args = {
-    "executable_path": "chromedriver.exe",
-    "headless": True
-}
-
-
 # The class is used to report scraping progress to a progress bar on clinet's side
 class Progress():
     # Parameter: a list of all events that signufy advancement of a progress bar
@@ -49,13 +41,12 @@ class Progress():
             self.progress = 100
         
     # Advances a progress bar by a small step inside of the current stage of progress
-    # For example: a stage might have 10 sub stages, to advance to the 3rd step, call progress.substage_start(3, 10)
+    # For example: a stage might have 10 sub stages, to advance to the 3rd step, call progress.substage_start(2, 10)
     # Steps are not accumulated
     def substage_start(self, num, total):
-        self.progress = (self.stage + (num-1)/total) * self.step
+        self.progress = (self.stage + num/total) * self.step
 
     # Return a dictionary with the current progress
-    # Intended to be returnes as JSON object to a request
     def to_dict(self):
         return {
             'progress': int(self.progress),
@@ -76,6 +67,13 @@ def make_scraping_progress():
         "Finalizing"
     ])
 
+
+# Global variable with splinter Browser configuration parameters
+# Put them here so the calling app can modify them
+browser_args = {
+    "executable_path": "chromedriver.exe",
+    "headless": True
+}
 
 # Function does actual scraping and returns a dictionary with scraped data
 # Parameter: Progress object
@@ -168,8 +166,15 @@ def scrape(progress: Progress):
 
     if mars_weather == no_weather_msg:
         # Try again
+        current_step -= tweets_timeout + 1
+        progress.substage_start(current_step, steps_count)
         browser.reload()
-        time.sleep(3)
+        current_step += 1
+
+        for i in range(tweets_timeout):
+            progress.substage_start(current_step, steps_count)
+            time.sleep(1)
+            current_step += 1
 
         # Very stupid and straightforward (and probably the most effective) approach:
         # Just find the first string that looks like Mars weather
@@ -203,7 +208,7 @@ def scrape(progress: Progress):
 
     progress.stage_start()
     steps_count = 5 # main page and 4 download pages
-    current_step = 1
+    current_step = 0
     
     mars_hemispheres_url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
     astrogeology_base_url = 'https://astrogeology.usgs.gov'
@@ -233,7 +238,7 @@ def scrape(progress: Progress):
         progress.substage_start(current_step, steps_count)
         current_step += 1
 
-        time.sleep(1)
+        time.sleep(0.5)
         response = requests.get(hemisphere_dct['download_page_url'])
         soup = BeautifulSoup(response.text, 'lxml')
         
