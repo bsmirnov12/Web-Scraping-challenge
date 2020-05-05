@@ -59,9 +59,9 @@ class Progress():
     def to_dict(self):
         return {
             'progress': int(self.progress),
-            'stage': self.stage + 1,
+            'stage': self.stage,
             'stages': self.stages,
-            'name': self.events_lst[self.stage]
+            'name': self.events_lst[self.stage - 1]
         }
     
 
@@ -118,7 +118,7 @@ def scrape(progress: Progress):
     logout_timeout = 1
     tweets_timeout = 3
     steps_count = 1 + logout_timeout + 1 + tweets_timeout
-    current_step = 1
+    current_step = 0
 
     twitter_logout_url = 'https://twitter.com/logout'
     mars_weather_url = 'https://twitter.com/marswxreport?lang=en'
