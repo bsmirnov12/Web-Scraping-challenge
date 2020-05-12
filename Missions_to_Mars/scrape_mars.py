@@ -12,27 +12,28 @@ import time
 
 # The class is used to report scraping progress to a progress bar on clinet's side
 class Progress():
-    # Parameter: a list of all events that signufy advancement of a progress bar
-    def __init__(self, events_lst = [""]):
+    # Parameter: a list of all events that signify advancement of a progress bar
+    def __init__(self, events_lst = []):
         self.events_lst = events_lst
         self.progress = 0.0
-        self.stage = 0
+        self.stage = -1
         self.stages = len(events_lst)
         if self.stages:
             self.step = 100.0 / self.stages
         else:
+            self.step = 0
             self.events_lst = [""]
-            self.progress = 100
+            self.progress = 0
 
     # Advances a progress bar either by one event, or up to the named event
-    def stage_start(self, event_name=""):
+    def stage_start(self, event_name=None):
         self.stage += 1
         if self.stage > self.stages:
             self.stage = self.stages
 
         if not event_name:
             try:
-                self.stage = self.events_lst.index(event_name) + 1
+                self.stage = self.events_lst.index(event_name)
             except:
                 pass
 
@@ -46,13 +47,19 @@ class Progress():
     def substage_start(self, num, total):
         self.progress = (self.stage + num/total) * self.step
 
+    # The progress reached 100%
+    def the_end(self):
+        self.stage = self.stages - 1
+        self.progress = 100
+        time.sleep(1)
+
     # Return a dictionary with the current progress
     def to_dict(self):
         return {
             'progress': int(self.progress),
-            'stage': self.stage,
+            'stage': (self.stage + 1),
             'stages': self.stages,
-            'name': self.events_lst[self.stage - 1]
+            'name': self.events_lst[self.stage]
         }
     
 
@@ -113,8 +120,10 @@ def scrape(progress: Progress):
     # =============
 
     progress.stage_start()
+
+    # calculate substages
     logout_timeout = 1
-    tweets_timeout = 3
+    tweets_timeout = 2
     steps_count = 1 + logout_timeout + 1 + tweets_timeout
     current_step = 0
 
@@ -123,7 +132,7 @@ def scrape(progress: Progress):
     
     progress.substage_start(current_step, steps_count)
     browser.visit(twitter_logout_url)
-    steps_count += 1
+    current_step += 1
 
     for i in range(0, logout_timeout):
         progress.substage_start(current_step, steps_count)
@@ -132,7 +141,7 @@ def scrape(progress: Progress):
 
     progress.substage_start(current_step, steps_count)
     browser.visit(mars_weather_url)
-    steps_count += 1
+    current_step += 1
 
     # Wait for the page to load!
     # It didn't work without the delay
@@ -166,6 +175,7 @@ def scrape(progress: Progress):
 
     if mars_weather == no_weather_msg:
         # Try again
+        print("\n!!! Rescraping Mars Weather\n")
         current_step -= tweets_timeout + 1
         progress.substage_start(current_step, steps_count)
         browser.reload()
@@ -178,10 +188,9 @@ def scrape(progress: Progress):
 
         # Very stupid and straightforward (and probably the most effective) approach:
         # Just find the first string that looks like Mars weather
-        match = re.search('InSight ([^<]+) hPa', browser.html)
+        match = re.search('(InSight [^<]+ hPa)', browser.html)
         if match: # Gotcha!
-            s = match.group(1)
-            mars_weather = 'InSight ' + s.replace('\n', ' ') + ' hPa'
+            mars_weather = match.group(1)
 
     # Mars Facts
     # ===========
@@ -252,7 +261,9 @@ def scrape(progress: Progress):
     # =========
 
     progress.stage_start()
-    browser.quit()
+    browser.quit() # takes some time...
+
+    progress.the_end() # mark 100%
 
     return {
         'news_title': news_title,

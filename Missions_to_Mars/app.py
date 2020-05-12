@@ -45,7 +45,8 @@ def index():
     mars_info = mongo.db.trivia.find_one()
     if not mars_info:
         logger.debug("index(): No data in mongo database. Loading defaults")
-        mars_info = scrape_mars.test()
+        #mars_info = scrape_mars.test()
+        mars_info = None # Show empty template
     else:
         logger.debug("index(): Data read from mongo database")
 
